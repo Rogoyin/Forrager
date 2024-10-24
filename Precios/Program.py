@@ -15,10 +15,10 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 import sys
 sys.path.append('c:/Users/tomas/Documents/Programación/Proyectos/Paquetes')
-import Foragio as fg
-import Excelio as ex
-import Framio as fr
-import Stringio as st
+import Forpy as fg
+import Excpy as ex
+import Frampy as fr
+import Stringpy as st
 
 
 # ------------------------------------------------------------------------------------------------

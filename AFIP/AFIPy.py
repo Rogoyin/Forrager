@@ -355,6 +355,7 @@ def Initialize_Chrome_Driver() -> webdriver.Chrome:
     Options.add_argument('--ignore-ssl-errors')
 
     Driver = webdriver.Chrome(options=Options)
+    Driver.maximize_window()
     return Driver
 
 def Wait_For_Download(File_Path: str, Timeout: int = 30, Interval: int = 2) -> None:
@@ -466,6 +467,7 @@ def Generate_Invoice(Driver: webdriver.Chrome, Sales_Point: str, Invoice_Type: i
     Generate_Button = Driver.find_element(By.XPATH, 
         "//span[@class='ui-button-text' and text()='Generar Comprobantes']")
     Generate_Button.click()
+    time.sleep(1)
 
     # Step 2: Select Sales Point and Invoice Type
     WebDriverWait(Driver, 10).until(EC.presence_of_element_located((By.ID, "puntodeventa")))
@@ -475,6 +477,7 @@ def Generate_Invoice(Driver: webdriver.Chrome, Sales_Point: str, Invoice_Type: i
 
     WebDriverWait(Driver, 10).until(EC.presence_of_element_located((By.ID, "universocomprobante")))
     Invoice_Type_List = Driver.find_element(By.ID, "universocomprobante")
+    time.sleep(1)
     Select(Invoice_Type_List).select_by_value(str(Invoice_Type))
 
     Continue_Button = Driver.find_element(By.XPATH, "//input[@value='Continuar >']")
@@ -484,9 +487,11 @@ def Generate_Invoice(Driver: webdriver.Chrome, Sales_Point: str, Invoice_Type: i
     WebDriverWait(Driver, 10).until(EC.presence_of_element_located((By.ID, "fc")))
     Date_Field = Driver.find_element(By.ID, "fc")
     Date_Field.clear()
+    time.sleep(1)
     Date_Field.send_keys(Date)
 
     Concept_List = Driver.find_element(By.ID, "idconcepto")
+    time.sleep(1)
     Select(Concept_List).select_by_value(str(Concept_Type))
     Continue_Button = Driver.find_element(By.XPATH, "//input[@value='Continuar >']")
     Continue_Button.click()
@@ -507,10 +512,12 @@ def Generate_Invoice(Driver: webdriver.Chrome, Sales_Point: str, Invoice_Type: i
     WebDriverWait(Driver, 10).until(EC.presence_of_element_located((By.ID, "detalle_descripcion1")))
     Description_Field = Driver.find_element(By.ID, "detalle_descripcion1")
     Description_Field.clear()
+    time.sleep(1)
     Description_Field.send_keys(Description)
 
     Price_Field = Driver.find_element(By.ID, "detalle_precio1")
     Price_Field.clear()
+    time.sleep(1)
     Price_Field.send_keys(str(Price))
 
     Continue_Button = Driver.find_element(By.XPATH, "//input[@value='Continuar >']")
@@ -519,12 +526,14 @@ def Generate_Invoice(Driver: webdriver.Chrome, Sales_Point: str, Invoice_Type: i
     # Step 6: Confirm
     WebDriverWait(Driver, 10).until(EC.presence_of_element_located((By.XPATH, "//input[@value='Confirmar Datos...']")))
     Confirm_Button = Driver.find_element(By.XPATH, "//input[@value='Confirmar Datos...']")
+    time.sleep(1)
     Confirm_Button.click()
 
     Alert = WebDriverWait(Driver, 10).until(EC.alert_is_present())
     Alert.accept()
 
     Menu_Button = Driver.find_element(By.XPATH, "//input[@value='Menú Principal']")
+    time.sleep(1)
     Menu_Button.click()
 
     return Driver

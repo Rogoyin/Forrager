@@ -1,8 +1,14 @@
-import shutil
+# -------------------------------------------------------------------------------------------------
+# Paquetes.
+# -------------------------------------------------------------------------------------------------
+
 import os
 import time
+import shutil
+import openpyxl
 import pandas as pd
-from typing import Any
+from typing import Any, List
+from datetime import datetime, timedelta
 from openpyxl import load_workbook
 from openpyxl.styles import NamedStyle, Alignment
 from selenium import webdriver
@@ -13,6 +19,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+
 
 # -------------------------------------------------------------------------------------------------
 # Listas.
@@ -44,8 +51,80 @@ Tipos_Condicion_IVA = {"IVA Responsable Inscripto": "1",
 
 
 # -------------------------------------------------------------------------------------------------
+# Variables globales.
+# -------------------------------------------------------------------------------------------------
+
+Ruta_Descarga_Payway = 'C:/Users/tomas/Downloads'
+Nombre_Viejo = 'Movimientos En Linea Delimitado por comas.csv'
+Ruta_Nueva_Payway = 'J:/My Drive/Forraje/AFIP' 
+Nombre_Nuevo = 'Payway.csv'
+Email_Payway = 'carolina8101924@gmail.com'
+Contraseña_Payway = '123Nogue$'
+Usuario_AFIP = '27202147025'
+Contraseña_AFIP = '123Carolina$'
+Empresa = 'MARQUEZ CAROLINA MARIEL'
+Punto_de_Ventas = '00002-Las Piedras 2837 - Kilometro 45, Buenos Aires'
+Tipo_Comprobante = 'Factura C'
+Tipo_Concepto = 'Productos'
+Tipo_Condicion_IVA = 'Consumidor Final'
+Tipo_Pago = 'Contado'
+Tipo_Comprobante_Valor = Tipos_de_Comprobantes.get(Tipo_Comprobante)
+Tipo_Concepto_Valor = Tipos_de_Conceptos.get(Tipo_Concepto)
+Tipo_Condicion_IVA_Valor = Tipos_Condicion_IVA.get(Tipo_Condicion_IVA)
+
+
+# -------------------------------------------------------------------------------------------------
 # Funciones.
 # -------------------------------------------------------------------------------------------------
+
+# Etapa 0. Fechas.
+
+def Generate_Previous_Days_List() -> List[str]:
+
+    """
+    Generates a list of dates based on the current day of the week.
+    If today is Wednesday, the list includes Monday, Tuesday, and Wednesday
+    in DD/MM/YY format. If today is Sunday, the list includes Thursday,
+    Friday, Saturday, and Sunday.
+
+    Returns:
+        A list of strings representing the specified dates in DD/MM/YY format.
+
+    Example:
+        If today is Wednesday (27/12/23):
+        >>> Generate_Previous_Days_List()
+        ['25/12/23', '26/12/23', '27/12/23']
+        
+        If today is Sunday (31/12/23):
+        >>> Generate_Previous_Days_List()
+        ['28/12/23', '29/12/23', '30/12/23', '31/12/23']
+
+    """
+
+    # Detect today's date and day of the week.
+    Today = datetime.today()
+    Weekday = Today.weekday()  # 0 = Monday, ..., 6 = Sunday.
+
+    if Weekday == 2:  # Wednesday.
+        # Calculate Monday, Tuesday, and Wednesday.
+        Dates = [
+            (Today - timedelta(days=2)).strftime("%d/%m/%Y"),  # Monday.
+            (Today - timedelta(days=1)).strftime("%d/%m/%Y"),  # Tuesday.
+            Today.strftime("%d/%m/%Y"),                        # Wednesday.
+        ]
+    elif Weekday == 6:  # Sunday.
+        # Calculate Thursday, Friday, Saturday, and Sunday.
+        Dates = [
+            (Today - timedelta(days=3)).strftime("%d/%m/%Y"),  # Thursday.
+            (Today - timedelta(days=2)).strftime("%d/%m/%Y"),  # Friday.
+            (Today - timedelta(days=1)).strftime("%d/%m/%Y"),  # Saturday.
+            Today.strftime("%d/%m/%Y"),                        # Sunday.
+        ]
+    else:
+        # Return an empty list for other days of the week.
+        Dates = []
+
+    return Dates
 
 # Etapa 1. Payway.
 
@@ -120,7 +199,6 @@ def Download_CSV_From_Payway(Driver: WebDriver, Email: str, Password: str) -> We
     Comma_CSV_Button.click()
 
     return Driver
-
 
 # Etapa 2. Procesamiento del archivo CSV.
 
@@ -558,3 +636,88 @@ def Close_All_Chrome_Tabs(Driver: WebDriver) -> None:
 
     # Close all tabs by quitting the WebDriver session.
     Driver.quit()
+
+
+# -------------------------------------------------------------------------------------------------
+# Implementación.
+# -------------------------------------------------------------------------------------------------
+
+
+# Etapa 0. Fechas.
+
+Fechas = Generate_Previous_Days_List()
+
+
+# Etapa 1. Payway.
+
+# Abrir pestaña de Payway.
+Payway = Initialize_Chrome_Driver()
+
+# Descargar documento de Payway.
+Download_CSV_From_Payway(Payway, Email_Payway, Contraseña_Payway)
+
+# Esperar descarga del CSV.
+Wait_For_Download(f'{Ruta_Descarga_Payway}/{Nombre_Viejo}')
+
+# Mover y renombrar archivo CSV.
+Move_And_Rename_File(Ruta_Descarga_Payway, Nombre_Viejo, Ruta_Nueva_Payway, Nombre_Nuevo)
+
+
+# Etapa 2. Procesamiento del archivo CSV.
+
+# Crear DataFrame del CSV.
+df = pd.read_csv(Ruta_Nueva_Payway + '/' + Nombre_Nuevo, skiprows=1)
+
+# Dividir filas con valores mayores a 100000.
+df = Split_Rows_By_Threshold(df, 'MONTO_BRUTO', 100000)
+
+# Ruta del archivo con los precios a subir.
+Archivo = f'{Ruta_Nueva_Payway}/AFIP.xlsx'
+
+# Retocar CSV para que quede preparado para su utilización.
+Process_And_Save_Dataframe(df, Archivo)
+
+# Crear DataFrame final para facturar.
+df = pd.read_excel(Archivo)
+
+# Filtrar df con las fechas especificadas al comienzo.
+df = df[df['Fecha'].isin(Fechas)]
+
+# Resetear el índice del DataFrame.
+df = df.reset_index(drop=True)
+
+# Variables para las columnas.
+Fecha = df['Fecha']
+Descripcion = df['Descripción']
+Precio = df['Precio']
+
+
+# Etapa 3. AFIP.
+
+# Abrir pestaña de AFIP.
+Afip = Initialize_Chrome_Driver()
+
+# Loguearse en AFIP.
+Login_To_AFIP(Afip, Usuario_AFIP, Contraseña_AFIP, Empresa)
+
+# Bucle de facturación en AFIP producto a producto.
+if Tipo_Comprobante_Valor is not None and Tipo_Concepto_Valor is not None and Tipo_Condicion_IVA_Valor is not None:
+    for i in range (0, len(Descripcion)):
+        Generate_Invoice(Afip, 
+                              Punto_de_Ventas, 
+                              Tipo_Comprobante_Valor,
+                              Fecha[i], 
+                              Tipo_Concepto_Valor, 
+                              int(Tipo_Condicion_IVA_Valor), 
+                              Tipo_Pago, 
+                              Descripcion[i], 
+                              Precio[i])
+else:
+    raise ValueError("Tipo_Comprobante_Valor is None. Please check the Tipo_Comprobante value.")
+
+
+# Etapa 4. Cierre.
+
+# Cerrar todas las pestañas.
+Close_All_Chrome_Tabs(Afip)
+Close_All_Chrome_Tabs(Payway)

@@ -83,46 +83,43 @@ def Generate_Previous_Days_List() -> List[str]:
 
     """
     Generates a list of dates based on the current day of the week.
-    If today is Wednesday, the list includes Monday, Tuesday, and Wednesday
-    in DD/MM/YY format. If today is Sunday, the list includes Thursday,
-    Friday, Saturday, and Sunday.
+    Depending on today's day, it includes specific previous days up to today
+    in DD/MM/YY format.
 
     Returns:
         A list of strings representing the specified dates in DD/MM/YY format.
 
     Example:
-        If today is Wednesday (27/12/23):
+        If today is Monday (01/01/24):
         >>> Generate_Previous_Days_List()
-        ['25/12/23', '26/12/23', '27/12/23']
-        
-        If today is Sunday (31/12/23):
-        >>> Generate_Previous_Days_List()
-        ['28/12/23', '29/12/23', '30/12/23', '31/12/23']
+        ['28/12/23', '29/12/23', '30/12/23', '31/12/23', '01/01/24']
 
+        If today is Thursday (04/01/24):
+        >>> Generate_Previous_Days_List()
+        ['01/01/24', '02/01/24', '03/01/24', '04/01/24']
+        
     """
 
     # Detect today's date and day of the week.
     Today = datetime.today()
     Weekday = Today.weekday()  # 0 = Monday, ..., 6 = Sunday.
 
-    if Weekday == 2:  # Wednesday.
-        # Calculate Monday, Tuesday, and Wednesday.
-        Dates = [
-            (Today - timedelta(days=2)).strftime("%d/%m/%Y"),  # Monday.
-            (Today - timedelta(days=1)).strftime("%d/%m/%Y"),  # Tuesday.
-            Today.strftime("%d/%m/%Y"),                        # Wednesday.
-        ]
-    elif Weekday == 6:  # Sunday.
-        # Calculate Thursday, Friday, Saturday, and Sunday.
-        Dates = [
-            (Today - timedelta(days=3)).strftime("%d/%m/%Y"),  # Thursday.
-            (Today - timedelta(days=2)).strftime("%d/%m/%Y"),  # Friday.
-            (Today - timedelta(days=1)).strftime("%d/%m/%Y"),  # Saturday.
-            Today.strftime("%d/%m/%Y"),                        # Sunday.
-        ]
-    else:
-        # Return an empty list for other days of the week.
-        Dates = []
+    # Define the mapping of days to their corresponding previous days.
+    Days_Back = {
+        0: [4, 3, 2, 1, 0],  # Monday: Thursday, Friday, Saturday, Sunday, Monday.
+        1: [4, 3, 2, 1, 0, -1],  # Tuesday: Thursday, Friday, Saturday, Sunday, Monday, Tuesday.
+        2: [2, 1, 0],  # Wednesday: Monday, Tuesday, Wednesday.
+        3: [3, 2, 1, 0],  # Thursday: Monday, Tuesday, Wednesday, Thursday.
+        4: [4, 3, 2, 1, 0],  # Friday: Monday, Tuesday, Wednesday, Thursday, Friday.
+        5: [2, 1, 0],  # Saturday: Thursday, Friday, Saturday.
+        6: [3, 2, 1, 0],  # Sunday: Thursday, Friday, Saturday, Sunday.
+    }
+
+    # Generate the list of dates based on the day of the week.
+    Dates = [
+        (Today - timedelta(days=Days)).strftime("%d/%m/%Y")
+        for Days in Days_Back[Weekday]
+    ]
 
     return Dates
 

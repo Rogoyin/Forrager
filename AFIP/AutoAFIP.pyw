@@ -7,28 +7,37 @@ def Run_AFIPy_Script():
 
     """
     Executes the AFIPy.py script using the Python interpreter.
-    The script won't run on Monday, Tuesday, Thursday, Friday, or Saturday.
+    If today is not Wednesday or Sunday, asks the user for confirmation.
 
     """
-    
+
     # Get the current day of the week (0 = Monday, 6 = Sunday)
     Current_Day = datetime.datetime.now().weekday()
 
-    # Check if today is Monday, Tuesday, Thursday, Friday, or Saturday (days 0-5)
-    if Current_Day in [0, 1, 3, 4, 5]:
-        messagebox.showinfo("", "Today the script will not run.")
+    # Check if today is Wednesday (2) or Sunday (6)
+    if Current_Day in [2, 6]:
+        Run_Script = True
+    else:
+        # Ask the user if they want to run the script
+        Run_Script = messagebox.askyesno("", "Hoy no es miércoles ni domingo. ¿Querés continuar?")
+
+    if not Run_Script:
+        messagebox.showinfo("", "El script no va a correr.")
         Root_Window.destroy()
         return
 
     try:
+        # Hide the main window before running the script.
+        Root_Window.withdraw()
+
         # Run the Python script using subprocess.
         subprocess.run(
             ["python", "C:/Users/tomas/Documents/Programación/Github/Patricionog/Forrager/AFIP/AFIPy.pyw"],
             check=True
         )
-        messagebox.showinfo("Success", "AFIPy.py executed successfully!")
+        messagebox.showinfo("", "BotAFIP ejecutado correctamente")
     except Exception as Error:
-        messagebox.showerror("Error", f"An error occurred:\n{Error}")
+        messagebox.showerror("Error", f"Ocurrió un error:\n{Error}")
 
 # Create the main Tkinter window.
 Root_Window = tk.Tk()

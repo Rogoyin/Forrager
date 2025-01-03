@@ -176,7 +176,7 @@ df_Granel = fr.Match_And_Copy_Column_Values(df_Granel, df, 'Bolsa', 'Costo Bolsa
 
 df_Granel = df_Granel.replace('', 0)
 
-df_Granel = fr.Convert_Type_Of_Columns(df_Granel, ['Kilos', 'Costo Bolsa', 'Costo Final'], float)
+df_Granel = fr.Convert_Type_Of_Columns(df_Granel, ['Kilos', 'Costo Bolsa', 'Costo Final'], "float")
 
 df_Granel['Costo Kilo'] = df_Granel['Costo Bolsa']/df_Granel['Kilos']
 
@@ -199,7 +199,7 @@ df_Fraccion = fr.Match_And_Copy_Column_Values(df_Fraccion, df, 'Fraccionable', '
 
 df_Fraccion = df_Fraccion.replace('', 0)
 
-df_Fraccion = fr.Convert_Type_Of_Columns(df_Fraccion, ['Unidades', 'Costo Paquete'], float)
+df_Fraccion = fr.Convert_Type_Of_Columns(df_Fraccion, ['Unidades', 'Costo Paquete'], "float")
 
 df_Fraccion['Costo Unidad'] = df_Fraccion['Costo Paquete']/df_Fraccion['Unidades']
 
